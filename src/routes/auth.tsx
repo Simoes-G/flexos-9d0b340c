@@ -22,8 +22,8 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const bootstrap = useServerFn(ensureDevAdmin);
-  const [email, setEmail] = useState("admin@admin.com");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("user@user.com");
+  const [password, setPassword] = useState("user123");
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
   const [loading, setLoading] = useState(false);
   const [bootstrapping, setBootstrapping] = useState(true);
