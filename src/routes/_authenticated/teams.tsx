@@ -111,7 +111,7 @@ function TeamsPage() {
             <div className="flex items-start gap-3">
               <div
                 className="grid h-11 w-11 shrink-0 place-items-center rounded-lg"
-                style={{ backgroundColor: `${t.color}20`, color: t.color }}
+                style={{ backgroundColor: `${t.color ?? "#6366f1"}20`, color: t.color ?? "#6366f1" }}
               >
                 <UsersRound className="h-5 w-5" />
               </div>

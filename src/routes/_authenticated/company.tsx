@@ -57,7 +57,8 @@ function CompanyPage() {
     setSaving(true);
     const payload: Record<string, string> = {};
     fields.forEach((f) => (payload[f.key] = form[f.key] ?? ""));
-    const { error } = await supabase.from("company").update(payload).eq("id", company.id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await supabase.from("company").update(payload as any).eq("id", company.id);
     setSaving(false);
     if (error) toast.error(error.message);
     else {

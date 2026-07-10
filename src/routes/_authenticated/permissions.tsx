@@ -30,7 +30,13 @@ function PermissionsPage() {
   const modules = Array.from(new Set(perms.map((p) => p.module)));
 
   const toggle = async (id: string, field: "can_view" | "can_edit" | "can_delete", value: boolean) => {
-    const { error } = await supabase.from("permissions").update({ [field]: value }).eq("id", id);
+    const patch =
+      field === "can_view"
+        ? { can_view: value }
+        : field === "can_edit"
+          ? { can_edit: value }
+          : { can_delete: value };
+    const { error } = await supabase.from("permissions").update(patch).eq("id", id);
     if (error) toast.error(error.message);
     else qc.invalidateQueries({ queryKey: ["permissions"] });
   };
