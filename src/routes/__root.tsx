@@ -88,10 +88,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "Nexus — Plataforma de Gestão Empresarial" },
       {
         property: "og:description",
-        content: "Gestão empresarial moderna, unificada e escalável.",
+        content: "Nexus é a plataforma unificada de gestão empresarial: dashboard, equipes, permissões, integrações e mais.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Nexus — Plataforma de Gestão Empresarial" },
+      { name: "twitter:description", content: "Nexus é a plataforma unificada de gestão empresarial: dashboard, equipes, permissões, integrações e mais." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b16fd1f0-7345-4b8f-ac9c-a4f1eaf9a33a/id-preview-ad7a940f--1acf42af-5321-43b2-98de-784d6a33679d.lovable.app-1783702414608.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b16fd1f0-7345-4b8f-ac9c-a4f1eaf9a33a/id-preview-ad7a940f--1acf42af-5321-43b2-98de-784d6a33679d.lovable.app-1783702414608.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
