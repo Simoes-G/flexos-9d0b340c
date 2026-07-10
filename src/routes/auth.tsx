@@ -195,10 +195,10 @@ function AuthPage() {
           </div>
 
           <div className="mt-8 rounded-lg border border-dashed border-border bg-muted/40 p-4 text-xs text-muted-foreground">
-            <div className="font-medium text-foreground">Acesso de desenvolvimento</div>
+            <div className="font-medium text-foreground">Acesso de demonstração</div>
             <div className="mt-1">
-              Use <span className="font-mono">admin@admin.com</span> /{" "}
-              <span className="font-mono">admin123</span> para testes.
+              Use <span className="font-mono">user@user.com</span> /{" "}
+              <span className="font-mono">user123</span> para explorar a plataforma em modo leitura.
             </div>
           </div>
         </div>
