@@ -104,6 +104,83 @@ export type Database = {
         }
         Relationships: []
       }
+      event_participants: {
+        Row: {
+          created_at: string
+          event_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_participants_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          all_day: boolean
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_at: string
+          google_calendar_id: string | null
+          google_event_id: string | null
+          id: string
+          location: string | null
+          start_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          all_day?: boolean
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_at: string
+          google_calendar_id?: string | null
+          google_event_id?: string | null
+          id?: string
+          location?: string | null
+          start_at: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          all_day?: boolean
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_at?: string
+          google_calendar_id?: string | null
+          google_event_id?: string | null
+          id?: string
+          location?: string | null
+          start_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       files: {
         Row: {
           category: string | null
@@ -236,6 +313,92 @@ export type Database = {
         }
         Relationships: []
       }
+      product_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          active: boolean
+          category_id: string | null
+          cost_price: number
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          min_stock: number
+          name: string
+          sale_price: number
+          sku: string | null
+          stock_quantity: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category_id?: string | null
+          cost_price?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          min_stock?: number
+          name: string
+          sale_price?: number
+          sku?: string | null
+          stock_quantity?: number
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category_id?: string | null
+          cost_price?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          min_stock?: number
+          name?: string
+          sale_price?: number
+          sku?: string | null
+          stock_quantity?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -274,6 +437,47 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      stock_movements: {
+        Row: {
+          created_at: string
+          id: string
+          movement_type: Database["public"]["Enums"]["stock_movement_type"]
+          product_id: string
+          quantity: number
+          reason: string | null
+          reference: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          movement_type: Database["public"]["Enums"]["stock_movement_type"]
+          product_id: string
+          quantity: number
+          reason?: string | null
+          reference?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          movement_type?: Database["public"]["Enums"]["stock_movement_type"]
+          product_id?: string
+          quantity?: number
+          reason?: string | null
+          reference?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       team_members: {
         Row: {
@@ -368,6 +572,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "member"
+      stock_movement_type: "in" | "out" | "adjust"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -496,6 +701,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "member"],
+      stock_movement_type: ["in", "out", "adjust"],
     },
   },
 } as const

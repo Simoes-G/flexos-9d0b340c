@@ -14,6 +14,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CommandPalette } from "@/components/command-palette";
+import { AiAssistant } from "@/components/ai-assistant";
+
 
 type Profile = { full_name: string | null; email: string | null; avatar_url: string | null };
 
@@ -33,10 +36,23 @@ export function AppShell({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
 
   const { data: profile } = useQuery({
     queryKey: ["me"],
@@ -174,16 +190,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Menu className="h-5 w-5" />
           </button>
 
-          <div className="hidden md:flex flex-1 max-w-md items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2">
+          <button
+            onClick={() => setPaletteOpen(true)}
+            className="hidden md:flex flex-1 max-w-md items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-left hover:bg-muted/60 transition-colors"
+          >
             <Search className="h-4 w-4 text-muted-foreground" />
-            <input
-              placeholder="Buscar em toda a plataforma..."
-              className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-            />
+            <span className="flex-1 text-sm text-muted-foreground">Buscar em toda a plataforma...</span>
             <kbd className="hidden lg:inline-block rounded border border-border bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">
               ⌘K
             </kbd>
-          </div>
+          </button>
+
 
           <div className="ml-auto flex items-center gap-1">
             <Link
@@ -236,9 +253,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="mx-auto w-full max-w-[1400px] p-4 md:p-8">{children}</div>
         </main>
       </div>
+
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <AiAssistant />
     </div>
   );
 }
+
 
 export function PageHeader({
   title,
