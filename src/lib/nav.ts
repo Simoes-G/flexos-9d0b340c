@@ -39,7 +39,7 @@ export const NAV: NavSection[] = [
     label: "Visão Geral",
     items: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/agenda", label: "Agenda", icon: CalendarDays, soon: true },
+      { to: "/agenda", label: "Agenda", icon: CalendarDays },
       { to: "/relatorios", label: "Relatórios", icon: BarChart3, soon: true },
     ],
   },
@@ -48,7 +48,8 @@ export const NAV: NavSection[] = [
     items: [
       { to: "/comercial", label: "Comercial", icon: ShoppingCart, soon: true },
       { to: "/financeiro", label: "Financeiro", icon: Wallet, soon: true },
-      { to: "/estoque", label: "Estoque", icon: Boxes, soon: true },
+      { to: "/estoque", label: "Estoque", icon: Boxes },
+
       { to: "/producao", label: "Produção", icon: Factory, soon: true },
       { to: "/servicos", label: "Serviços", icon: Wrench, soon: true },
       { to: "/projetos", label: "Projetos", icon: BriefcaseBusiness, soon: true },
