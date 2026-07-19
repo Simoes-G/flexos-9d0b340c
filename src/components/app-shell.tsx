@@ -14,6 +14,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CommandPalette } from "@/components/command-palette";
+import { AiAssistant } from "@/components/ai-assistant";
+
 
 type Profile = { full_name: string | null; email: string | null; avatar_url: string | null };
 
