@@ -253,9 +253,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="mx-auto w-full max-w-[1400px] p-4 md:p-8">{children}</div>
         </main>
       </div>
+
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <AiAssistant />
     </div>
   );
 }
+
 
 export function PageHeader({
   title,
