@@ -77,12 +77,22 @@ export const listServiceOrders = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("service_orders")
-      .select(
-        "*, client:service_clients(id,name), assignee:profiles!service_orders_assignee_id_fkey(id,full_name,email)",
-      )
+      .select("*, client:service_clients(id,name)")
       .order("opened_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return data ?? [];
+    const ids = Array.from(new Set((data ?? []).map((o) => o.assignee_id).filter(Boolean))) as string[];
+    let profMap = new Map<string, { full_name: string | null; email: string | null }>();
+    if (ids.length) {
+      const { data: profs } = await context.supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", ids);
+      profMap = new Map((profs ?? []).map((p) => [p.id, { full_name: p.full_name, email: p.email }]));
+    }
+    return (data ?? []).map((o) => ({
+      ...o,
+      assignee: o.assignee_id ? profMap.get(o.assignee_id) ?? null : null,
+    }));
   });
 
 export const getServiceOrder = createServerFn({ method: "GET" })
