@@ -72,7 +72,7 @@ function RelatoriosPage() {
 
   return (
     <div>
-      <PageHeader title="Relatórios" description="Análises de ordens de serviço." icon={BarChart3} />
+      <PageHeader title="Relatórios" description="Análises de ordens de serviço." />
 
       <div className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-4">
         <div>

@@ -88,7 +88,7 @@ function ServicosPage() {
       <PageHeader
         title="Serviços"
         description="Ordens de serviço, catálogo e clientes."
-        icon={Wrench}
+
       />
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
