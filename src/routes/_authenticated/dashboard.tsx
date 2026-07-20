@@ -26,6 +26,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function DashboardPage() {
+  const osFn = useServerFn(serviceOrdersSummary);
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
@@ -52,6 +53,11 @@ function DashboardPage() {
         audit: audit.data ?? [],
       };
     },
+  });
+
+  const { data: os } = useQuery({
+    queryKey: ["dashboard-os"],
+    queryFn: () => osFn({}),
   });
 
   const kpis = [
