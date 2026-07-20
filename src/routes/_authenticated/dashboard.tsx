@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/app-shell";
 import {
@@ -11,8 +12,13 @@ import {
   Building2,
   Sparkles,
   TrendingUp,
+  Wrench,
+  AlertTriangle,
+  CheckCircle2,
+  Timer,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { serviceOrdersSummary } from "@/lib/services.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Nexus" }] }),
