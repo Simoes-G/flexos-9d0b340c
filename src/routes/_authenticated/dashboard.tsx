@@ -178,24 +178,50 @@ function DashboardPage() {
         </section>
       </div>
 
-      {/* Roadmap teaser */}
-      <section className="mt-8 rounded-xl border border-border bg-gradient-to-br from-primary/5 via-card to-card p-6">
-        <div className="mb-4 flex items-center gap-2">
-          <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-          <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Próximos módulos
+      {/* Ordens de Serviço */}
+      <section className="mt-8 rounded-xl border border-border bg-card p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Wrench className="h-4 w-4 text-primary" />
+            <h2 className="text-base font-semibold">Ordens de Serviço</h2>
           </div>
+          <Link to="/servicos" className="text-xs font-medium text-primary hover:underline">
+            Abrir módulo
+          </Link>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {["Comercial", "Financeiro", "Estoque", "Projetos"].map((m) => (
-            <div
-              key={m}
-              className="rounded-lg border border-border bg-background/70 p-4 text-sm"
-            >
-              <div className="font-medium">{m}</div>
-              <div className="text-xs text-muted-foreground">Estrutura preparada</div>
-            </div>
-          ))}
+          {[
+            { label: "Abertas", value: os?.open ?? 0, icon: Wrench, tone: "bg-blue-500/10 text-blue-500" },
+            {
+              label: "Em execução",
+              value: os?.inProgress ?? 0,
+              icon: Timer,
+              tone: "bg-amber-500/10 text-amber-500",
+            },
+            {
+              label: "Concluídas no mês",
+              value: os?.completedMonth ?? 0,
+              icon: CheckCircle2,
+              tone: "bg-emerald-500/10 text-emerald-500",
+            },
+            {
+              label: "Atrasadas",
+              value: os?.overdue ?? 0,
+              icon: AlertTriangle,
+              tone: "bg-rose-500/10 text-rose-500",
+            },
+          ].map((k) => {
+            const Icon = k.icon;
+            return (
+              <div key={k.label} className="rounded-lg border border-border bg-background p-4">
+                <div className={`mb-2 grid h-8 w-8 place-items-center rounded-md ${k.tone}`}>
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="text-xl font-semibold">{k.value}</div>
+                <div className="text-xs text-muted-foreground">{k.label}</div>
+              </div>
+            );
+          })}
         </div>
       </section>
     </div>
