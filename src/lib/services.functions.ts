@@ -180,7 +180,10 @@ export const updateServiceOrderStatus = createServerFn({ method: "POST" })
     if (data.status === "completed") patch.completed_at = new Date().toISOString();
     const { data: row, error } = await context.supabase
       .from("service_orders")
-      .update(patch)
+      .update({
+        status: data.status,
+        ...(data.status === "completed" ? { completed_at: new Date().toISOString() } : {}),
+      })
       .eq("id", data.id)
       .select()
       .single();
