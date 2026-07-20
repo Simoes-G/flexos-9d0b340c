@@ -438,6 +438,182 @@ export type Database = {
         }
         Relationships: []
       }
+      service_catalog: {
+        Row: {
+          active: boolean
+          base_price: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          duration_minutes: number
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          base_price?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          base_price?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      service_clients: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          document: string | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          document?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          document?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      service_order_items: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          order_id: string
+          quantity: number
+          service_id: string | null
+          subtotal: number | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          order_id: string
+          quantity?: number
+          service_id?: string | null
+          subtotal?: number | null
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          order_id?: string
+          quantity?: number
+          service_id?: string | null
+          subtotal?: number | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "service_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_order_items_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "service_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_orders: {
+        Row: {
+          assignee_id: string | null
+          client_id: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          due_at: string | null
+          id: string
+          notes: string | null
+          number: string | null
+          opened_at: string
+          status: Database["public"]["Enums"]["service_order_status"]
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          client_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_at?: string | null
+          id?: string
+          notes?: string | null
+          number?: string | null
+          opened_at?: string
+          status?: Database["public"]["Enums"]["service_order_status"]
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          client_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_at?: string | null
+          id?: string
+          notes?: string | null
+          number?: string | null
+          opened_at?: string
+          status?: Database["public"]["Enums"]["service_order_status"]
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_orders_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "service_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_movements: {
         Row: {
           created_at: string
@@ -572,6 +748,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "member"
+      service_order_status: "open" | "in_progress" | "completed" | "cancelled"
       stock_movement_type: "in" | "out" | "adjust"
     }
     CompositeTypes: {
@@ -701,6 +878,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "member"],
+      service_order_status: ["open", "in_progress", "completed", "cancelled"],
       stock_movement_type: ["in", "out", "adjust"],
     },
   },
