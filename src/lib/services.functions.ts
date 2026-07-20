@@ -102,9 +102,7 @@ export const getServiceOrder = createServerFn({ method: "GET" })
     const [{ data: order, error: e1 }, { data: items, error: e2 }] = await Promise.all([
       context.supabase
         .from("service_orders")
-        .select(
-          "*, client:service_clients(id,name,email,phone), assignee:profiles!service_orders_assignee_id_fkey(id,full_name,email)",
-        )
+        .select("*, client:service_clients(id,name,email,phone)")
         .eq("id", data.id)
         .maybeSingle(),
       context.supabase
@@ -115,7 +113,16 @@ export const getServiceOrder = createServerFn({ method: "GET" })
     ]);
     if (e1) throw new Error(e1.message);
     if (e2) throw new Error(e2.message);
-    return { order, items: items ?? [] };
+    let assignee: { full_name: string | null; email: string | null } | null = null;
+    if (order?.assignee_id) {
+      const { data: p } = await context.supabase
+        .from("profiles")
+        .select("full_name,email")
+        .eq("id", order.assignee_id)
+        .maybeSingle();
+      assignee = p ? { full_name: p.full_name, email: p.email } : null;
+    }
+    return { order: order ? { ...order, assignee } : null, items: items ?? [] };
   });
 
 export const createServiceOrder = createServerFn({ method: "POST" })
