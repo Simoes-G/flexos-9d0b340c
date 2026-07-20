@@ -176,8 +176,6 @@ export const updateServiceOrderStatus = createServerFn({ method: "POST" })
     (i: { id: string; status: "open" | "in_progress" | "completed" | "cancelled" }) => i,
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = { status: data.status };
-    if (data.status === "completed") patch.completed_at = new Date().toISOString();
     const { data: row, error } = await context.supabase
       .from("service_orders")
       .update({
