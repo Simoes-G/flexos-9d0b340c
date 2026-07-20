@@ -40,7 +40,7 @@ export const NAV: NavSection[] = [
     items: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/agenda", label: "Agenda", icon: CalendarDays },
-      { to: "/relatorios", label: "Relatórios", icon: BarChart3, soon: true },
+      { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
     ],
   },
   {
@@ -51,7 +51,7 @@ export const NAV: NavSection[] = [
       { to: "/estoque", label: "Estoque", icon: Boxes },
 
       { to: "/producao", label: "Produção", icon: Factory, soon: true },
-      { to: "/servicos", label: "Serviços", icon: Wrench, soon: true },
+      { to: "/servicos", label: "Serviços", icon: Wrench },
       { to: "/projetos", label: "Projetos", icon: BriefcaseBusiness, soon: true },
     ],
   },
