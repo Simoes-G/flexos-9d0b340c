@@ -1,95 +1,88 @@
 
-# Próximas Evoluções — Ideias para Demonstração
+# Próxima entrega — Módulo Serviços (Ordens de Serviço)
 
-Como ainda não há nicho definido, a estratégia é priorizar **módulos horizontais** (úteis em qualquer empresa) e **integrações reconhecíveis** que impressionam em demos. Abaixo, propostas organizadas por impacto x esforço.
+Escopo enxuto e focado: um núcleo de OS funcional + três complementos leves conectados a ele.
 
-## 1. Módulos horizontais (funcionam em qualquer segmento)
+## 1. Núcleo — Ordens de Serviço
 
-### A. CRM leve — "Comercial" funcional
-Transformar o placeholder `/comercial` em um mini-CRM:
-- Cadastro de **contatos** e **empresas/clientes**
-- **Pipeline Kanban** de oportunidades (Lead → Qualificação → Proposta → Ganho/Perdido)
-- Valor previsto, responsável, data de fechamento
-- Timeline de interações (notas, ligações, e-mails)
+Ativar `/servicos` (hoje "Em breve") com:
 
-**Por que:** todo negócio vende algo. Kanban é visualmente forte em demos.
+- **Catálogo de serviços**: nome, descrição, preço base, duração estimada, ativo/inativo.
+- **Clientes**: cadastro leve (nome, documento, e-mail, telefone) — reaproveitável quando o CRM chegar.
+- **Ordens de Serviço**:
+  - Número sequencial, cliente, serviço(s), responsável (usuário), status (Aberta → Em execução → Concluída / Cancelada), datas de abertura/prevista/conclusão, valor total, observações.
+  - Itens da OS (serviço + quantidade + valor) para permitir mais de um serviço por OS.
+  - Histórico simples (mudanças de status registradas em `audit_log`).
+- **Visualização**: lista com filtros (status, cliente, período) + tela de detalhe da OS.
+- **Widget no Dashboard**: OS abertas, em execução e concluídas no mês.
 
-### B. Financeiro básico — Contas a pagar/receber
-Ativar `/financeiro`:
-- Lançamentos (entrada/saída), categorias, centros de custo
-- Fluxo de caixa com gráfico mensal
-- Contas vencendo (widget no dashboard)
-- Exportação CSV
+## 2. Complementos
 
-**Por que:** dor universal, gera "wow" imediato com gráficos.
+### A. Relatórios + exportação CSV (`/relatorios`)
+- Ativar a página, hoje placeholder.
+- Três relatórios iniciais, todos filtráveis por período:
+  1. OS por status
+  2. OS por responsável
+  3. Faturamento por serviço
+- Botão "Exportar CSV" em cada relatório (gerado no cliente a partir dos dados carregados).
 
-### C. Projetos & Tarefas
-Ativar `/projetos`:
-- Projetos com responsável, prazo, status
-- Tarefas em Kanban (To do / Doing / Done) ou lista
-- Atribuição a membros de equipe (já temos `teams`)
-- Comentários e checklist
+### B. E-mail transacional (Resend)
+- Conectar Resend via connector padrão.
+- Dois gatilhos automáticos:
+  1. OS criada → e-mail para o cliente com resumo.
+  2. OS concluída → e-mail para o cliente com valor final.
+- Template React Email simples reaproveitando as cores do design system.
+- Envio via server function chamada pelas mutações de OS.
 
-**Por que:** reaproveita as tabelas `teams`/`team_members` já existentes.
+### C. IA aplicada ao módulo
+Estender o assistente existente (`ai-assistant.tsx`) com contexto de OS:
+- Passar para o prompt: OS abertas, atrasadas (prazo vencido) e concluídas na semana.
+- Duas ações rápidas no painel do assistente:
+  - "Resumir minhas OS do dia"
+  - "Sugerir próximas ações" (prioriza atrasadas e clientes recorrentes)
 
-### D. Agenda / Calendário
-Ativar `/agenda`:
-- Eventos com data, hora, participantes, local
-- Visão mensal/semanal
-- Vinculação opcional a projetos ou clientes
+## 3. Alterações técnicas
 
-## 2. Recursos transversais (elevam a percepção de maturidade)
+### Banco (uma migration)
+Novas tabelas em `public`:
+- `service_catalog` (nome, descrição, preço, duração, ativo)
+- `service_clients` (nome, documento, contato)
+- `service_orders` (numero, cliente, responsável, status, datas, total, notas)
+- `service_order_items` (order_id, service_id, quantidade, valor)
 
-### E. Busca global (Cmd+K)
-Command palette buscando em clientes, projetos, tarefas, arquivos, usuários. Enorme impacto percebido, esforço médio.
+Cada tabela: `GRANT` para `authenticated`/`service_role`, RLS ativa, políticas:
+- Leitura: todos autenticados.
+- Escrita: admin/manager, ou responsável na própria OS.
+- Trigger de `updated_at` e trigger para gerar `numero` sequencial por ano.
 
-### F. Dashboard personalizável
-Widgets arrastáveis, escolha do que ver. Alternativa mais simples: **dashboards por papel** (admin vê tudo; membro vê o próprio).
+### Código
+- `src/routes/_authenticated/servicos.tsx`: substitui o placeholder pela UI completa (lista + detalhe em drawer/modal).
+- `src/routes/_authenticated/relatorios.tsx`: substitui placeholder pelos três relatórios + CSV.
+- `src/lib/services.functions.ts`: server fns (list/create/update/complete OS, list reports).
+- `src/lib/email/service-order.tsx`: templates React Email + envio via Resend gateway.
+- `src/lib/ai.functions.ts`: ampliar contexto do assistente com dados de OS.
+- `src/components/ai-assistant.tsx`: adicionar chips de ações rápidas.
+- `src/components/app-shell.tsx` / `src/lib/nav.ts`: garantir "Serviços" e "Relatórios" ativos (removendo do "em breve").
+- Dashboard: card com contadores de OS.
 
-### G. Exportação & Relatórios
-Ativar `/relatorios` com relatórios prontos (vendas por período, financeiro por categoria, tarefas por responsável) + exportação CSV/PDF.
+### Integração externa
+- Conector padrão **Resend** via `standard_connectors--connect`.
+- Domínio de envio: usar `onboarding@resend.dev` inicialmente (aviso de que envio real exige domínio verificado); trocar depois via variável.
 
-### H. Modo escuro + tema por empresa
-Já temos design system; expor toggle e cor primária configurável na página `/company`.
+## 4. Fora deste escopo
 
-## 3. Integrações de impacto em demo
+- Google Calendar (fica para próxima iteração, schema já preparado).
+- CRM completo / Financeiro / Estoque avançado.
+- Pagamentos, assinaturas de OS, PDF de OS.
+- Dashboard personalizável / modo escuro por empresa.
 
-### I. E-mail transacional (Resend)
-Notificações reais por e-mail: convites de usuário, senha, atribuição de tarefa. Conector Resend já disponível no gateway.
+## 5. Ordem de execução
 
-### J. WhatsApp / Telegram
-Notificações críticas via Telegram (mais simples) ou avisos via WhatsApp através de provedor. Alto apelo comercial no Brasil.
+1. Migration (tabelas + RLS + trigger de numeração).
+2. Server functions de OS e relatórios.
+3. UI de `/servicos` e `/relatorios`.
+4. Widget de OS no Dashboard.
+5. Conector Resend + templates + gatilhos.
+6. Extensão do assistente de IA.
 
-### K. Google Calendar / Outlook
-Sincronizar `/agenda` com o calendário do usuário. Conectores prontos no gateway.
-
-### L. Google Drive / OneDrive
-`/files` puxando arquivos do Drive ou fazendo upload direto ao bucket. Conectores prontos.
-
-### M. IA embarcada (Lovable AI)
-- Assistente lateral que responde sobre dados da empresa
-- Resumo automático de reuniões / notas
-- Sugestão de próximas ações no CRM
-Custo baixo (Lovable AI Gateway), altíssimo apelo.
-
-### N. Pagamentos (Stripe)
-Assinatura da própria plataforma (multi-tenant no futuro) ou cobrança de clientes finais.
-
-## Recomendação de sequência
-
-Para uma **próxima entrega demonstrável**, sugiro este pacote coeso:
-
-1. **CRM leve (A)** — pipeline Kanban visual
-2. **Busca global Cmd+K (E)** — polimento perceptível
-3. **IA embarcada (M)** — diferencial moderno
-4. **E-mail transacional via Resend (I)** — dá "vida" real ao sistema
-
-Esse combo mostra: dado real (CRM) + produtividade (Cmd+K) + inovação (IA) + integração externa (e-mail). Cobre as perguntas típicas de qualquer cliente em demo, independente do nicho.
-
-## Perguntas para você decidir
-
-- Qual dos três módulos horizontais quer ativar primeiro: **CRM**, **Financeiro** ou **Projetos**?
-- Prioriza **integrações externas** (Resend, Google, WhatsApp) ou **recursos internos** (Cmd+K, IA, relatórios)?
-- Quer que eu já foque em **um único pacote de demo** (ex.: CRM + Cmd+K + IA) ou distribuir em várias entregas menores?
-
-Confirme a direção e eu detalho o plano técnico do módulo escolhido.
+Confirmando, sigo direto para a migration.
