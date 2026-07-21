@@ -1,88 +1,70 @@
+## Objetivo
+Transformar o Nexus em um SaaS self-service com uma **homepage pública de vendas** e um fluxo de **cadastro → escolha de plano → workspace isolado por tenant**. O app atual continua igual, mas passa a operar sob `/t/{slug}/...` e cada tenant tem seus próprios dados via `tenant_id` + RLS.
 
-# Próxima entrega — Módulo Serviços (Ordens de Serviço)
+## Plano único disponível (MVP)
+- **Nexus Base** — R$ 79/mês, inclui 3 administradores.
+- **Usuário extra** — +R$ 30/mês por administrador adicional.
+- Sem cobrança real neste ciclo — apenas o fluxo de assinatura/registro.
 
-Escopo enxuto e focado: um núcleo de OS funcional + três complementos leves conectados a ele.
+## Arquitetura de tenancy
+- **Multi-tenant lógico**: 1 banco, coluna `tenant_id` em toda tabela de dados + RLS.
+- **Roteamento**: slug na URL — `/t/{slug}/dashboard`, `/t/{slug}/estoque`, etc. Subdomínio real fica para depois.
+- **Homepage/conta**: rotas públicas fora do tenant (`/`, `/pricing`, `/signup`, `/account`).
 
-## 1. Núcleo — Ordens de Serviço
+## Etapas
 
-Ativar `/servicos` (hoje "Em breve") com:
+### 1. Banco de dados (migration)
+Novas tabelas:
+- `tenants` — nome, slug (único), plano, seats contratados, status, owner_id.
+- `tenant_members` — vínculo user↔tenant com papel (`owner` | `admin` | `member`).
+- `plans` — catálogo dos planos (seed com "Nexus Base").
+- `subscriptions` — plano ativo do tenant, seats, status, período.
 
-- **Catálogo de serviços**: nome, descrição, preço base, duração estimada, ativo/inativo.
-- **Clientes**: cadastro leve (nome, documento, e-mail, telefone) — reaproveitável quando o CRM chegar.
-- **Ordens de Serviço**:
-  - Número sequencial, cliente, serviço(s), responsável (usuário), status (Aberta → Em execução → Concluída / Cancelada), datas de abertura/prevista/conclusão, valor total, observações.
-  - Itens da OS (serviço + quantidade + valor) para permitir mais de um serviço por OS.
-  - Histórico simples (mudanças de status registradas em `audit_log`).
-- **Visualização**: lista com filtros (status, cliente, período) + tela de detalhe da OS.
-- **Widget no Dashboard**: OS abertas, em execução e concluídas no mês.
+Alterações:
+- Adicionar `tenant_id uuid not null` em: `company`, `teams`, `team_members`, `permissions`, `products`, `product_categories`, `stock_movements`, `events`, `event_participants`, `files`, `notifications`, `audit_log`, `integrations`, `service_catalog`, `service_clients`, `service_orders`, `service_order_items`.
+- Reescrever policies RLS: além de `auth.uid()`, exigir `tenant_id = current_tenant()` via helper `SECURITY DEFINER` que lê do JWT/claim ou de `tenant_members`.
+- Função `has_role` passa a receber `tenant_id`; `user_roles` ganha `tenant_id` (papel é por tenant).
+- Contagem de admins do tenant não pode exceder `seats` da subscription (trigger simples).
 
-## 2. Complementos
+Dados demo continuam existindo em um tenant "demo" pré-criado.
 
-### A. Relatórios + exportação CSV (`/relatorios`)
-- Ativar a página, hoje placeholder.
-- Três relatórios iniciais, todos filtráveis por período:
-  1. OS por status
-  2. OS por responsável
-  3. Faturamento por serviço
-- Botão "Exportar CSV" em cada relatório (gerado no cliente a partir dos dados carregados).
+### 2. Homepage pública (marketing)
+Novas rotas públicas em `src/routes/`:
+- `index.tsx` — landing de vendas (hero, propostas de valor, módulos, prints, CTA de cadastro).
+- `pricing.tsx` — card do plano Base + calculadora de usuários extras (79 + 30×N).
+- `signup.tsx` — cria conta, escolhe slug do workspace, seleciona quantidade de admins, cria tenant + subscription, redireciona para `/t/{slug}/dashboard`.
+- `login.tsx` — substitui/renomeia `auth.tsx`; após login lista tenants do usuário e leva ao workspace.
 
-### B. E-mail transacional (Resend)
-- Conectar Resend via connector padrão.
-- Dois gatilhos automáticos:
-  1. OS criada → e-mail para o cliente com resumo.
-  2. OS concluída → e-mail para o cliente com valor final.
-- Template React Email simples reaproveitando as cores do design system.
-- Envio via server function chamada pelas mutações de OS.
+Nova identidade visual leve reaproveitando os tokens do design atual (sem virar "marketing genérico").
 
-### C. IA aplicada ao módulo
-Estender o assistente existente (`ai-assistant.tsx`) com contexto de OS:
-- Passar para o prompt: OS abertas, atrasadas (prazo vencido) e concluídas na semana.
-- Duas ações rápidas no painel do assistente:
-  - "Resumir minhas OS do dia"
-  - "Sugerir próximas ações" (prioriza atrasadas e clientes recorrentes)
+### 3. Rotas do app viram tenant-scoped
+- Mover `src/routes/_authenticated/*` para `src/routes/_authenticated/t.$slug/*`.
+- Layout `t.$slug/route.tsx`: `beforeLoad` valida sessão + membership no tenant, injeta `tenant` no contexto e no `AppShell`. Sem membership → redireciona para `/account`.
+- Todos os `Link`/`navigate` internos passam a usar `params={{ slug }}`.
+- Todas as queries dos módulos filtram por `tenant_id` (o RLS já garante, mas a query também para performance/clareza).
 
-## 3. Alterações técnicas
+### 4. Conta do usuário (fora do tenant)
+Nova rota `/account`:
+- Lista os workspaces (tenants) que o usuário possui/pertence.
+- Mostra plano atual, seats usados/contratados, botão de "adicionar admin" (envia convite por e-mail — MVP: gera link/token na tela).
+- Aba "Plano": exibe R$ 79 base + R$ 30 × extras, permite ajustar quantidade de seats (grava em `subscriptions`, sem cobrança).
+- Aba "Administradores": convida/remove admins do tenant respeitando o limite de seats.
 
-### Banco (uma migration)
-Novas tabelas em `public`:
-- `service_catalog` (nome, descrição, preço, duração, ativo)
-- `service_clients` (nome, documento, contato)
-- `service_orders` (numero, cliente, responsável, status, datas, total, notas)
-- `service_order_items` (order_id, service_id, quantidade, valor)
+### 5. Ajustes finos
+- `src/lib/nav.ts`: itens passam a receber o slug atual.
+- `AppShell`: mostra nome do tenant no topo + trocador de workspace.
+- `admin-bootstrap.functions.ts`: cria também o **tenant demo** (`demo`) com owner `admin@admin.com`, seats=3, e vincula `user@user.com` como member desse tenant. Os dados demo existentes recebem `tenant_id` do tenant demo.
+- Command palette e AI assistant passam a operar no escopo do tenant atual.
 
-Cada tabela: `GRANT` para `authenticated`/`service_role`, RLS ativa, políticas:
-- Leitura: todos autenticados.
-- Escrita: admin/manager, ou responsável na própria OS.
-- Trigger de `updated_at` e trigger para gerar `numero` sequencial por ano.
+## Fora do escopo (fica para depois)
+- Cobrança real (Stripe/Paddle).
+- Subdomínio wildcard real.
+- Convites por e-mail com Resend (agora só link/token na UI).
+- Planos adicionais.
 
-### Código
-- `src/routes/_authenticated/servicos.tsx`: substitui o placeholder pela UI completa (lista + detalhe em drawer/modal).
-- `src/routes/_authenticated/relatorios.tsx`: substitui placeholder pelos três relatórios + CSV.
-- `src/lib/services.functions.ts`: server fns (list/create/update/complete OS, list reports).
-- `src/lib/email/service-order.tsx`: templates React Email + envio via Resend gateway.
-- `src/lib/ai.functions.ts`: ampliar contexto do assistente com dados de OS.
-- `src/components/ai-assistant.tsx`: adicionar chips de ações rápidas.
-- `src/components/app-shell.tsx` / `src/lib/nav.ts`: garantir "Serviços" e "Relatórios" ativos (removendo do "em breve").
-- Dashboard: card com contadores de OS.
-
-### Integração externa
-- Conector padrão **Resend** via `standard_connectors--connect`.
-- Domínio de envio: usar `onboarding@resend.dev` inicialmente (aviso de que envio real exige domínio verificado); trocar depois via variável.
-
-## 4. Fora deste escopo
-
-- Google Calendar (fica para próxima iteração, schema já preparado).
-- CRM completo / Financeiro / Estoque avançado.
-- Pagamentos, assinaturas de OS, PDF de OS.
-- Dashboard personalizável / modo escuro por empresa.
-
-## 5. Ordem de execução
-
-1. Migration (tabelas + RLS + trigger de numeração).
-2. Server functions de OS e relatórios.
-3. UI de `/servicos` e `/relatorios`.
-4. Widget de OS no Dashboard.
-5. Conector Resend + templates + gatilhos.
-6. Extensão do assistente de IA.
-
-Confirmando, sigo direto para a migration.
+## Detalhes técnicos
+- Helper SQL `public.current_tenant()` retorna `tenant_id` a partir de `tenant_members` cruzando com `auth.uid()` e o slug lido do path — como o slug não chega ao Postgres, na prática as policies farão `EXISTS (SELECT 1 FROM tenant_members WHERE user_id = auth.uid() AND tenant_id = row.tenant_id)`. Simples e seguro.
+- `has_role(_user_id, _tenant_id, _role)` reescrita.
+- Todos os `createServerFn` protegidos passam a receber `tenantId` no input e validar membership antes de qualquer leitura/escrita.
+- Rotas públicas (`/`, `/pricing`, `/signup`, `/login`) não usam `requireSupabaseAuth` e são SSR-friendly (bom para SEO da landing).
+- `/` deixa de redirecionar para `/dashboard`: passa a ser a landing.

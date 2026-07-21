@@ -1,6 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+async function currentTenantId(ctx: { supabase: typeof import("@supabase/supabase-js").SupabaseClient extends never ? never : any; userId: string }): Promise<string> {
+  const { data } = await ctx.supabase
+    .from("tenant_members")
+    .select("tenant_id")
+    .eq("user_id", ctx.userId)
+    .limit(1)
+    .maybeSingle();
+  if (!data?.tenant_id) throw new Error("Sem tenant ativo");
+  return data.tenant_id as string;
+}
+
 // ---------- Catálogo ----------
 export const listServiceCatalog = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -26,7 +37,8 @@ export const upsertServiceCatalog = createServerFn({ method: "POST" })
     }) => i,
   )
   .handler(async ({ data, context }) => {
-    const payload = { ...data, created_by: context.userId };
+    const tenantId = await currentTenantId(context);
+    const payload = { ...data, created_by: context.userId, tenant_id: tenantId };
     const { data: row, error } = await context.supabase
       .from("service_catalog")
       .upsert(payload)
@@ -61,7 +73,8 @@ export const upsertServiceClient = createServerFn({ method: "POST" })
     }) => i,
   )
   .handler(async ({ data, context }) => {
-    const payload = { ...data, created_by: context.userId };
+    const tenantId = await currentTenantId(context);
+    const payload = { ...data, created_by: context.userId, tenant_id: tenantId };
     const { data: row, error } = await context.supabase
       .from("service_clients")
       .upsert(payload)
@@ -137,9 +150,11 @@ export const createServiceOrder = createServerFn({ method: "POST" })
     }) => i,
   )
   .handler(async ({ data, context }) => {
+    const tenantId = await currentTenantId(context);
     const { data: order, error } = await context.supabase
       .from("service_orders")
       .insert({
+        tenant_id: tenantId,
         client_id: data.client_id ?? null,
         assignee_id: data.assignee_id ?? null,
         due_at: data.due_at ?? null,
@@ -152,6 +167,7 @@ export const createServiceOrder = createServerFn({ method: "POST" })
     if (data.items.length) {
       const { error: e2 } = await context.supabase.from("service_order_items").insert(
         data.items.map((it) => ({
+          tenant_id: tenantId,
           order_id: order.id,
           service_id: it.service_id ?? null,
           description: it.description,
@@ -162,6 +178,7 @@ export const createServiceOrder = createServerFn({ method: "POST" })
       if (e2) throw new Error(e2.message);
     }
     await context.supabase.from("audit_log").insert({
+      tenant_id: tenantId,
       action: `OS ${order.number} criada`,
       entity: "service_orders",
       entity_id: order.id,
@@ -176,6 +193,7 @@ export const updateServiceOrderStatus = createServerFn({ method: "POST" })
     (i: { id: string; status: "open" | "in_progress" | "completed" | "cancelled" }) => i,
   )
   .handler(async ({ data, context }) => {
+    const tenantId = await currentTenantId(context);
     const { data: row, error } = await context.supabase
       .from("service_orders")
       .update({
@@ -187,6 +205,7 @@ export const updateServiceOrderStatus = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     await context.supabase.from("audit_log").insert({
+      tenant_id: tenantId,
       action: `OS ${row.number} → ${data.status}`,
       entity: "service_orders",
       entity_id: row.id,

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentTenantId } from "@/hooks/use-tenant";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/_authenticated/files")({
 
 function FilesPage() {
   const qc = useQueryClient();
+  const tenantId = useCurrentTenantId();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", category: "general", url: "" });
 
@@ -41,8 +43,11 @@ function FilesPage() {
   const add = async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
+    if (!tenantId) return toast.error("Tenant não encontrado");
     if (!form.name) return toast.error("Informe o nome do arquivo");
-    const { error } = await supabase.from("files").insert({ ...form, uploaded_by: u.user.id });
+    const { error } = await supabase
+      .from("files")
+      .insert({ ...form, uploaded_by: u.user.id, tenant_id: tenantId });
     if (error) toast.error(error.message);
     else {
       toast.success("Arquivo registrado");

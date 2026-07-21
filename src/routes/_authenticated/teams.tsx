@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentTenantId } from "@/hooks/use-tenant";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/_authenticated/teams")({
 
 function TeamsPage() {
   const qc = useQueryClient();
+  const tenantId = useCurrentTenantId();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", color: "#6366f1" });
 
@@ -41,7 +43,8 @@ function TeamsPage() {
 
   const create = async () => {
     if (!form.name) return toast.error("Informe o nome da equipe");
-    const { error } = await supabase.from("teams").insert(form);
+    if (!tenantId) return toast.error("Tenant não encontrado");
+    const { error } = await supabase.from("teams").insert({ ...form, tenant_id: tenantId });
     if (error) toast.error(error.message);
     else {
       toast.success("Equipe criada");
