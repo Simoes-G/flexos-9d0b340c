@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentTenantId } from "@/hooks/use-tenant";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -462,10 +463,13 @@ function ProductDialog({
     stock_quantity: product?.stock_quantity ?? 0,
     min_stock: product?.min_stock ?? 0,
   });
+  const tenantId = useCurrentTenantId();
 
   const save = async () => {
     if (!form.name.trim()) return toast.error("Informe o nome do produto");
+    if (!tenantId) return toast.error("Tenant não encontrado");
     const payload = {
+      tenant_id: tenantId,
       name: form.name,
       sku: form.sku || null,
       description: form.description || null,
@@ -596,10 +600,12 @@ function CategoryDialog({
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [color, setColor] = useState("#6366f1");
+  const tenantId = useCurrentTenantId();
 
   const save = async () => {
     if (!name.trim()) return;
-    const { error } = await supabase.from("product_categories").insert({ name, color });
+    if (!tenantId) return toast.error("Tenant não encontrado");
+    const { error } = await supabase.from("product_categories").insert({ name, color, tenant_id: tenantId });
     if (error) return toast.error(error.message);
     toast.success("Categoria criada");
     setName("");
@@ -648,11 +654,14 @@ function MovementDialog({
   const [qty, setQty] = useState(1);
   const [reason, setReason] = useState("");
   const [reference, setReference] = useState("");
+  const tenantId = useCurrentTenantId();
 
   const save = async () => {
     if (qty <= 0) return toast.error("Quantidade inválida");
+    if (!tenantId) return toast.error("Tenant não encontrado");
     const { data: u } = await supabase.auth.getUser();
     const { error } = await supabase.from("stock_movements").insert({
+      tenant_id: tenantId,
       product_id: product.id,
       movement_type: type,
       quantity: qty,
