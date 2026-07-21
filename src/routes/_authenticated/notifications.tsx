@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentTenantId } from "@/hooks/use-tenant";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Bell, Check, Info, AlertTriangle, CheckCircle2 } from "lucide-react";
@@ -19,6 +20,7 @@ const ICONS = {
 
 function NotificationsPage() {
   const qc = useQueryClient();
+  const tenantId = useCurrentTenantId();
 
   const { data: notifications = [] } = useQuery({
     queryKey: ["notifications"],
@@ -50,10 +52,11 @@ function NotificationsPage() {
 
   const createDemo = async () => {
     const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return;
+    if (!u.user || !tenantId) return;
     const types = ["info", "success", "warning"] as const;
     const t = types[Math.floor(Math.random() * types.length)];
     await supabase.from("notifications").insert({
+      tenant_id: tenantId,
       user_id: u.user.id,
       title: "Nova notificação",
       message: "Esta é uma notificação de teste criada agora.",

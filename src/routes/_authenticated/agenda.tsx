@@ -294,7 +294,16 @@ function EventDialog({ onDone }: { onDone: () => void }) {
   const save = async () => {
     if (!form.title.trim()) return toast.error("Informe o título");
     const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return toast.error("Faça login novamente");
+    const { data: mem } = await supabase
+      .from("tenant_members")
+      .select("tenant_id")
+      .eq("user_id", u.user.id)
+      .limit(1)
+      .maybeSingle();
+    if (!mem?.tenant_id) return toast.error("Tenant não encontrado");
     const { error } = await supabase.from("events").insert({
+      tenant_id: mem.tenant_id,
       title: form.title,
       description: form.description || null,
       location: form.location || null,
@@ -302,7 +311,7 @@ function EventDialog({ onDone }: { onDone: () => void }) {
       start_at: new Date(form.start_at).toISOString(),
       end_at: new Date(form.end_at).toISOString(),
       all_day: form.all_day,
-      created_by: u.user?.id ?? null,
+      created_by: u.user.id,
     });
     if (error) return toast.error(error.message);
     toast.success("Evento criado");
